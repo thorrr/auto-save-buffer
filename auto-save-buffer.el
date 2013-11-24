@@ -1,7 +1,6 @@
  ;; Copyright (C) 2012, Jason Bell
 
 ;; Author: Jason Bell <jbellthor AT gmail dot com>
-;; URL: http://www.emacswiki.org/cgi-bin/wiki/IdleHighlight
 ;; Version: 1.0
 ;; Created: 2012-12-15
 ;; Keywords: auto save, autosave
