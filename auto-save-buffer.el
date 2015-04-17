@@ -105,7 +105,8 @@
           (if (ignore-errors (set-buffer elem) t)
               (if (and (buffer-file-name) (buffer-modified-p)
                        (or (not auto-save-buffer-only-after-regular-save)
-                           (and auto-save-buffer-only-after-regular-save auto-save-buffer/manually-saved)))
+                           (and auto-save-buffer-only-after-regular-save (boundp 'auto-save-buffer/manually-saved)
+                                'auto-save-buffer/manually-saved)))
                   (progn
                     ;;we have to do this because advising 'message and 'write-region don't work
                     (if (not auto-save-buffer-messaging) (progn
