@@ -81,20 +81,30 @@
 (defadvice save-buffer (before save-buffer-real-autosave-mark activate)
    (set (make-local-variable 'auto-save-buffer/manually-saved) 't))
  
-(defvar message-original nil
+(defvar auto-save-buffer/message-original nil
   "A pointer to the original definition of message")
-(fset 'message-original (symbol-function 'message))
+(fset 'auto-save-buffer/message-original (symbol-function 'message))
  
-(defvar write-region-original nil
+(defvar auto-save-buffer/write-region-original nil
   "A pointer to the original definition of write-region")
-(fset 'write-region-original (symbol-function 'write-region))
- 
+(fset 'auto-save-buffer/write-region-original (symbol-function 'write-region))
+
+(defvar auto-save-buffer/suppressed-message nil
+  "Store the suppressed message in case there was an error saving
+  the file")
+
 (defun no-message (fs &rest args)
+  "Don't print the message but store it in
+auto-save-buffer/suppressed-message"
+  (if args
+      (setq auto-save-buffer/suppressed-message (format fs args))
+    ;; only call format if this is called with multiple arguments
+    (setq auto-save-buffer/suppressed-message fs))
   't)
  
 (defun write-region-silent (start end filename &optional append visit lockname mustbenew)
   (set-buffer-modified-p nil)
-  (write-region-original start end filename append 1 lockname mustbenew))
+  (auto-save-buffer/write-region-original start end filename append 1 lockname mustbenew))
 
 (defun auto-save-buffer ()
   "Save every buffer in auto-save-buffer-alist"
@@ -107,15 +117,18 @@
                        (or (not auto-save-buffer-only-after-regular-save)
                            (and auto-save-buffer-only-after-regular-save (boundp 'auto-save-buffer/manually-saved)
                                 'auto-save-buffer/manually-saved)))
-                  (progn
+                  (let (;;override debug-on-error so that with-demoted-errors never raises
+                        (debug-on-error nil)
+                        (fname (buffer-file-name)))
                     ;;we have to do this because advising 'message and 'write-region don't work
                     (if (not auto-save-buffer-messaging) (progn
                         (fset 'message (symbol-function 'no-message))
                         (fset 'write-region (symbol-function 'write-region-silent))))
-                    (write-file (buffer-file-name))
+                    (with-demoted-errors
+                      (write-file fname))
                     (if (not auto-save-buffer-messaging) (progn
-                        (fset 'message (symbol-function 'message-original))
-                        (fset 'write-region (symbol-function 'write-region-original))))
+                        (fset 'message (symbol-function 'auto-save-buffer/message-original))
+                        (fset 'write-region (symbol-function 'auto-save-buffer/write-region-original))))
                     )))))))
 
 (defun turn-on-auto-save-buffer ()
