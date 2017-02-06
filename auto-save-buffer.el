@@ -62,6 +62,7 @@
 ;;         M-x turn-off-auto-save-buffer
 ;;
 
+(require 'cl)
 
 (defcustom auto-save-buffer-alist nil
   "List of buffers that will be auto saved")
@@ -97,8 +98,8 @@
   "Don't print the message but store it in
 auto-save-buffer/suppressed-message"
   (if args
+      ;; only call format if this is called with multiple arguments
       (setq auto-save-buffer/suppressed-message (format fs args))
-    ;; only call format if this is called with multiple arguments
     (setq auto-save-buffer/suppressed-message fs))
   't)
  
@@ -117,19 +118,13 @@ auto-save-buffer/suppressed-message"
                        (or (not auto-save-buffer-only-after-regular-save)
                            (and auto-save-buffer-only-after-regular-save (boundp 'auto-save-buffer/manually-saved)
                                 'auto-save-buffer/manually-saved)))
-                  (let (;;override debug-on-error so that with-demoted-errors never raises
-                        (debug-on-error nil)
-                        (fname (buffer-file-name)))
-                    ;;we have to do this because advising 'message and 'write-region don't work
-                    (if (not auto-save-buffer-messaging) (progn
-                        (fset 'message (symbol-function 'no-message))
-                        (fset 'write-region (symbol-function 'write-region-silent))))
-                    (with-demoted-errors
-                      (write-file fname))
-                    (if (not auto-save-buffer-messaging) (progn
-                        (fset 'message (symbol-function 'auto-save-buffer/message-original))
-                        (fset 'write-region (symbol-function 'auto-save-buffer/write-region-original))))
-                    )))))))
+                    (if (not auto-save-buffer-messaging)
+                        ;;we have to rebind because advising 'message and 'write-region don't work
+                        (cl-letf (((symbol-function 'message) (symbol-function 'no-message))
+                                  ((symbol-function 'write-region) (symbol-function 'write-region-silent)))
+                          (write-file (buffer-file-name)))
+                      ;; else do write-file with messaging turned on
+                      (write-file (buffer-file-name)))))))))
 
 (defun turn-on-auto-save-buffer ()
   (interactive)
