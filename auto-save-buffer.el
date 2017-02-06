@@ -92,7 +92,7 @@
   "Store the suppressed message in case there was an error saving
   the file")
 
-(defun no-message (fs &rest args)
+(defun auto-save-buffer/no-message (fs &rest args)
   "Don't print the message but store it in
 auto-save-buffer/suppressed-message"
   (if args
@@ -101,7 +101,7 @@ auto-save-buffer/suppressed-message"
     (setq auto-save-buffer/suppressed-message fs))
   't)
  
-(defun write-region-silent (start end filename &optional append visit lockname mustbenew)
+(defun auto-save-buffer/write-region-silent (start end filename &optional append visit lockname mustbenew)
   (set-buffer-modified-p nil)
   (auto-save-buffer/write-region-original start end filename append 1 lockname mustbenew))
 
@@ -118,8 +118,8 @@ auto-save-buffer/suppressed-message"
                                 'auto-save-buffer/manually-saved)))
                     (if (not auto-save-buffer-messaging)
                         ;;we have to rebind because advising 'message and 'write-region don't work
-                        (cl-letf (((symbol-function 'message) (symbol-function 'no-message))
-                                  ((symbol-function 'write-region) (symbol-function 'write-region-silent)))
+                        (cl-letf (((symbol-function 'message) (symbol-function 'auto-save-buffer/no-message))
+                                  ((symbol-function 'write-region) (symbol-function 'auto-save-buffer/write-region-silent)))
                           (write-file (buffer-file-name)))
                       ;; else do write-file with messaging turned on
                       (write-file (buffer-file-name)))))))))
