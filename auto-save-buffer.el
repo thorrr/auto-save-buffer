@@ -78,7 +78,8 @@
  
 (defcustom auto-save-buffer-only-after-regular-save nil
   "Wait until user C-x C-s to start autosaving")
- 
+
+(defvar auto-save-buffer/manually-saved nil)  ;; turn off bytecomp warning
 (defadvice save-buffer (before save-buffer-real-autosave-mark activate)
    (set (make-local-variable 'auto-save-buffer/manually-saved) 't))
  
