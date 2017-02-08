@@ -82,12 +82,14 @@
 (defvar auto-save-buffer/manually-saved nil)  ;; turn off bytecomp warning
 (defadvice save-buffer (before save-buffer-real-autosave-mark activate)
    (set (make-local-variable 'auto-save-buffer/manually-saved) 't))
- 
-(defvar auto-save-buffer/message-original (symbol-function 'message)
+
+(defvar auto-save-buffer/message-original nil
   "A pointer to the original definition of message")
- 
-(defvar auto-save-buffer/write-region-original (symbol-function 'write-region)
+(fset 'auto-save-buffer/message-original (symbol-function 'message))
+
+(defvar auto-save-buffer/write-region-original nil
   "A pointer to the original definition of write-region")
+(fset 'auto-save-buffer/write-region-original (symbol-function 'write-region))
 
 (defvar auto-save-buffer/suppressed-message nil
   "Store the suppressed message in case there was an error saving
