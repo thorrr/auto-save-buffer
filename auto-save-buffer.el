@@ -94,9 +94,13 @@
 (defun auto-save-buffer/no-message (fs &rest args)
   "Don't print the message but store it in
 auto-save-buffer/suppressed-message"
+  ;; only call format if this is called with multiple arguments
   (if args
-      ;; only call format if this is called with multiple arguments
-      (setq auto-save-buffer/suppressed-message (format fs args))
+      ;; sometimes message() is called wtih a bad format string.  Robustly handle errors
+      ;; to format()
+      (if (not (with-demoted-errors "%s"
+                 (setq auto-save-buffer/suppressed-message (format fs args)) 't))
+          (setq auto-save-buffer/suppressed-message (concat fs " " args)))
     (setq auto-save-buffer/suppressed-message fs))
   't)
  
